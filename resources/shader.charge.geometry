@@ -1,0 +1,33 @@
+#version 460 core
+
+layout (points) in;
+layout (triangle_strip, max_vertices = 4) out;
+
+uniform float radius;
+uniform mat4 view;
+uniform mat4 projection;
+
+in VsOut {
+	vec2 position;
+	float color;
+} vsOut[];
+
+out vec2 position;
+out float color;
+
+void addVertex(float x, float y) {
+	gl_Position = gl_in[0].gl_Position + projection * vec4(x, y, 0, 0);
+	EmitVertex();
+}
+
+void main() {
+	position = vsOut[0].position;
+	color = vsOut[0].color;
+
+	float value = radius * view[0][0];
+	addVertex(-value, -value);
+	addVertex(-value, value);
+	addVertex(value, -value);
+	addVertex(value, value);
+	EndPrimitive();
+}
