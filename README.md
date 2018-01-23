@@ -8,9 +8,9 @@ This project requires OpenGL 4.6 and the Visual C++ 2017 Redistributable.
 Check out the releases for an executable: https://github.com/Trigary/FieldLines/releases
 
 **Building**    
-Required library: glfw3.lib
-Required includes: GLFW, glm, glad (and KHR)
-Required source file: glad.c
+Required library: glfw3.lib  
+Required includes: GLFW, glm, glad (and KHR)  
+Required source file: glad.c  
 For instructions please refer to this page: https://learnopengl.com/#!Getting-started/Creating-a-window
 
 **Showcase**    
