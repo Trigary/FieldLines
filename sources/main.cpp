@@ -1,72 +1,79 @@
-#include "includes.h"
-#include "chargeData.hpp"
-#include "lineData.hpp"
-#include "io.hpp"
+#include <ctime>
+#include <thread>
+#include <iostream>
+#include "glad/glad.h"
+#include "GLFW/glfw3.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.inl>
+#include "constants.h"
 #include "camera.hpp"
+#include "charge_data.hpp"
+#include "line_data.hpp"
+#include "io.hpp"
+#include "shader.hpp"
 
-bool initializeWindow();
-bool initializeGlad();
-void initializeLineObjects();
-void initializeChargeObjects();
-void windowKeyPressed(int key);
-void processWindowInput();
-bool isKeyPressed(int key);
-void renderScreen();
-void activateShader(Shader shader);
-void limitFrameRate();
+bool initialize_window();
+bool initialize_glad();
+void initialize_line_objects();
+void initialize_charge_objects();
+void window_key_pressed(int key);
+void process_window_input();
+bool is_key_pressed(int key);
+void render_screen();
+void activate_shader(shader shader);
+void limit_frame_rate();
 
 GLFWwindow* window;
-Shader lineShader(GL_ARRAY_BUFFER);
-Shader chargeShader(GL_ARRAY_BUFFER);
-double lastTimeStamp = 0;
-float deltaTime = 0.0f;
-bool viewMatrixChanged = true;
-bool projectionMatrixChanged = true;
+shader line_shader(GL_ARRAY_BUFFER);
+shader charge_shader(GL_ARRAY_BUFFER);
+double last_time_stamp = 0;
+float delta_time = 0.0f;
+bool view_matrix_changed = true;
+bool projection_matrix_changed = true;
 
 
 
 int main() {
 	srand((unsigned int)time(nullptr));
-	IO::printInfo();
-	IO::initializeCharges();
+	io::print_info();
+	io::initialize_charges();
 
-	if (!initializeWindow() || !initializeGlad()) {
+	if (!initialize_window() || !initialize_glad()) {
 		system("pause");
 		return -1;
 	}
 
-	initializeLineObjects();
-	initializeChargeObjects();
+	initialize_line_objects();
+	initialize_charge_objects();
 
 	while (!glfwWindowShouldClose(window)) {
-		processWindowInput();
+		process_window_input();
 
-		if (viewMatrixChanged) {
-			Camera::updateViewMatrix();
+		if (view_matrix_changed) {
+			camera::update_view_matrix();
 		}
 
 		glClear(GL_COLOR_BUFFER_BIT);
-		renderScreen();
+		render_screen();
 
-		viewMatrixChanged = false;
-		projectionMatrixChanged = false;
+		view_matrix_changed = false;
+		projection_matrix_changed = false;
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
-		limitFrameRate();
+		limit_frame_rate();
 	}
 
-	LineData::clear();
-	ChargeData::clear();
-	lineShader.clear();
-	chargeShader.clear();
+	line_data::clear();
+	charge_data::clear();
+	line_shader.clear();
+	charge_shader.clear();
 	glfwTerminate();
 	return 0;
 }
 
 
-
-bool initializeWindow() {
+bool initialize_window() {
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
@@ -82,21 +89,21 @@ bool initializeWindow() {
 	glfwMakeContextCurrent(window);
 	glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) {
 		glViewport(0, 0, width, height);
-		Camera::updateProjectionMatrix(width, height);
-		projectionMatrixChanged = true;
+		camera::update_projection_matrix(width, height);
+		projection_matrix_changed = true;
 	});
 
 	glfwSetKeyCallback(window, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
 		if (action == GLFW_PRESS) {
-			windowKeyPressed(key);
+			window_key_pressed(key);
 		}
 	});
 
-	Camera::updateProjectionMatrix(SCREEN_WIDTH, SCREEN_HEIGHT);
+	camera::update_projection_matrix(SCREEN_WIDTH, SCREEN_HEIGHT);
 	return true;
 }
 
-bool initializeGlad() {
+bool initialize_glad() {
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 		std::cout << "Failed to initialize GLAD" << std::endl;
 		return false;
@@ -106,9 +113,9 @@ bool initializeGlad() {
 	return true;
 }
 
-void initializeLineObjects() {
-	lineShader.initialize("line", false);
-	lineShader.activate();
+void initialize_line_objects() {
+	line_shader.initialize("line", false);
+	line_shader.activate();
 
 	unsigned int stride = 3 * sizeof(float);
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, stride, (void*)(nullptr));
@@ -117,12 +124,12 @@ void initializeLineObjects() {
 	glEnableVertexAttribArray(1);
 }
 
-void initializeChargeObjects() {
-	chargeShader.initialize("charge", true);
-	chargeShader.activate();
+void initialize_charge_objects() {
+	charge_shader.initialize("charge", true);
+	charge_shader.activate();
 
-	chargeShader.setFloat("radius", CHARGE_RADIUS);
-	chargeShader.setFloat("coloredRadius", CHARGE_COLORED_RADIUS);
+	charge_shader.set_float("radius", CHARGE_RADIUS);
+	charge_shader.set_float("colored_radius", CHARGE_COLORED_RADIUS);
 
 	unsigned int stride = 3 * sizeof(float);
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, stride, (void*)(nullptr));
@@ -132,100 +139,98 @@ void initializeChargeObjects() {
 }
 
 
-
-void windowKeyPressed(int key) {
+void window_key_pressed(int key) {
 	if (key == GLFW_KEY_ESCAPE) {
 		glfwSetWindowShouldClose(window, true);
 		return;
 	}
 
 	if (key == GLFW_KEY_SPACE) {
-		for (unsigned int i = 0; i < ChargeData::count; i++) {
-			ChargeData::charges[i].position = Vec2::random();
+		for (unsigned int i = 0; i < charge_data::count; i++) {
+			charge_data::charges[i].position = vec2::random();
 		}
-		LineData::calculateVertices();
-		ChargeData::calculateVertices();
+		line_data::calculate_vertices();
+		charge_data::calculate_vertices();
 	}
 }
 
-void processWindowInput() {
-	if (isKeyPressed(GLFW_KEY_KP_ADD)) {
-		Camera::zoom *= 1 + CAMERA_ZOOM * deltaTime;
-		viewMatrixChanged = true;
-	} else if (isKeyPressed(GLFW_KEY_KP_SUBTRACT)) {
-		Camera::zoom *= 1 - CAMERA_ZOOM * deltaTime;
-		viewMatrixChanged = true;
+void process_window_input() {
+	if (is_key_pressed(GLFW_KEY_KP_ADD)) {
+		camera::zoom *= 1 + CAMERA_ZOOM * delta_time;
+		view_matrix_changed = true;
+	} else if (is_key_pressed(GLFW_KEY_KP_SUBTRACT)) {
+		camera::zoom *= 1 - CAMERA_ZOOM * delta_time;
+		view_matrix_changed = true;
 	}
 
-	if (isKeyPressed(GLFW_KEY_LEFT) || isKeyPressed(GLFW_KEY_RIGHT)) {
-		float change = CAMERA_MOVE * deltaTime / Camera::zoom;
-		if (isKeyPressed(GLFW_KEY_RIGHT)) {
+	if (is_key_pressed(GLFW_KEY_LEFT) || is_key_pressed(GLFW_KEY_RIGHT)) {
+		float change = CAMERA_MOVE * delta_time / camera::zoom;
+		if (is_key_pressed(GLFW_KEY_RIGHT)) {
 			change *= -1;
 		}
-		if (Camera::aspectRatio < 1) {
-			change /= Camera::aspectRatio;
+		if (camera::aspect_ratio < 1) {
+			change /= camera::aspect_ratio;
 		}
-		Camera::position.x += change;
-		viewMatrixChanged = true;
+		camera::position.x += change;
+		view_matrix_changed = true;
 	}
 
-	if (isKeyPressed(GLFW_KEY_UP) || isKeyPressed(GLFW_KEY_DOWN)) {
-		float change = CAMERA_MOVE * deltaTime / Camera::zoom;
-		if (isKeyPressed(GLFW_KEY_UP)) {
+	if (is_key_pressed(GLFW_KEY_UP) || is_key_pressed(GLFW_KEY_DOWN)) {
+		float change = CAMERA_MOVE * delta_time / camera::zoom;
+		if (is_key_pressed(GLFW_KEY_UP)) {
 			change *= -1;
 		}
-		if (Camera::aspectRatio > 1) {
-			change *= Camera::aspectRatio;
+		if (camera::aspect_ratio > 1) {
+			change *= camera::aspect_ratio;
 		}
-		Camera::position.y += change;
-		viewMatrixChanged = true;
+		camera::position.y += change;
+		view_matrix_changed = true;
 	}
 }
 
-bool isKeyPressed(int key) {
+bool is_key_pressed(int key) {
 	return glfwGetKey(window, key) == GLFW_PRESS;
 }
 
 
-
-void renderScreen() {
-	activateShader(lineShader);
-	for (unsigned int line = 0; line < LineData::count; line++) {
-		unsigned int segments = LineData::segmentCount[line];
-		glBufferData(GL_ARRAY_BUFFER, segments * 3 * sizeof(float), LineData::vertices[line], GL_DYNAMIC_DRAW);
+void render_screen() {
+	activate_shader(line_shader);
+	for (unsigned int line = 0; line < line_data::count; line++) {
+		unsigned int segments = line_data::segment_count[line];
+		glBufferData(GL_ARRAY_BUFFER, segments * 3 * sizeof(float), line_data::vertices[line], GL_DYNAMIC_DRAW);
 		glDrawArrays(GL_LINE_STRIP, 0, segments);
 	}
 
-	activateShader(chargeShader);
-	glBufferData(GL_ARRAY_BUFFER, ChargeData::count * 3 * sizeof(float), ChargeData::vertices, GL_DYNAMIC_DRAW);
-	glDrawArrays(GL_POINTS, 0, ChargeData::count);
+	activate_shader(charge_shader);
+	glBufferData(GL_ARRAY_BUFFER, charge_data::count * 3 * sizeof(float), charge_data::vertices, GL_DYNAMIC_DRAW);
+	glDrawArrays(GL_POINTS, 0, charge_data::count);
 }
 
-void activateShader(Shader shader) {
+void activate_shader(shader shader) {
 	shader.activate();
 
-	if (viewMatrixChanged) {
-		shader.setMat4("view", Camera::viewMatrix);
+	if (view_matrix_changed) {
+		shader.set_mat4("view", camera::view_matrix);
 	}
 
-	if (projectionMatrixChanged) {
-		shader.setMat4("projection", Camera::projectionMatrix);
+	if (projection_matrix_changed) {
+		shader.set_mat4("projection", camera::projection_matrix);
 
-		if (shader == chargeShader) {
-			shader.setMat4("inverseProjection", inverse(Camera::projectionMatrix));
-			shader.setVec2("screen", (float)Camera::width, (float)Camera::height);
+		if (shader == charge_shader) {
+			shader.set_mat4("inverse_projection", inverse(camera::projection_matrix));
+			shader.set_vec2("screen", (float)camera::width, (float)camera::height);
 		}
 	}
 }
 
-void limitFrameRate() {
-	double newTime = glfwGetTime();
-	deltaTime = (float)(newTime - lastTimeStamp);
-	lastTimeStamp = newTime;
+void limit_frame_rate() {
+	double new_time = glfwGetTime();
+	delta_time = (float)(new_time - last_time_stamp);
+	last_time_stamp = new_time;
 
-	if (deltaTime < MIN_DELTA_TIME) {
-		std::this_thread::sleep_for(std::chrono::milliseconds((int)((MIN_DELTA_TIME - deltaTime) * 1000)));
-		lastTimeStamp += MIN_DELTA_TIME - deltaTime;
-		deltaTime = MIN_DELTA_TIME;
+	if (delta_time < MIN_DELTA_TIME) {
+		std::this_thread::sleep_for(std::chrono::milliseconds((int)((MIN_DELTA_TIME - delta_time) * 1000)));
+		last_time_stamp += MIN_DELTA_TIME - delta_time;
+		delta_time = MIN_DELTA_TIME;
 	}
 }

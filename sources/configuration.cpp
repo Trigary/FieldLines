@@ -1,1 +1,3 @@
-unsigned int PREFERRED_LINE_COUNT = 160;
+#include "configuration.hpp"
+
+unsigned int preferred_line_count = 160;

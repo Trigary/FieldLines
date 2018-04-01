@@ -1,34 +1,17 @@
 #pragma once
+#include "glm/glm.hpp"
+#include "vector.hpp"
 
-namespace Camera {
-	float zoom = 1.0f;
-	Vec2 position(0.0f);
-	glm::mat4 viewMatrix;
+namespace camera {
+	extern float zoom;
+	extern vec2 position;
+	extern glm::mat4 view_matrix;
 
-	unsigned int width;
-	unsigned int height;
-	float aspectRatio;
-	glm::mat4 projectionMatrix;
+	extern unsigned int width;
+	extern unsigned int height;
+	extern float aspect_ratio;
+	extern glm::mat4 projection_matrix;
 
-
-
-	inline void updateViewMatrix() {
-		viewMatrix = glm::mat4(1.0f);
-		viewMatrix[0][0] = zoom;
-		viewMatrix[1][1] = zoom;
-		viewMatrix = translate(viewMatrix, glm::vec3(position.x, position.y, 0));
-	}
-
-	inline void updateProjectionMatrix(unsigned int width, unsigned int height) {
-		Camera::width = width;
-		Camera::height = height;
-		aspectRatio = (float)width / height;
-
-		projectionMatrix = glm::mat4(1.0f);
-		if (aspectRatio > 1) {
-			projectionMatrix[0][0] = 1 / aspectRatio;
-		} else if (aspectRatio < 1) {
-			projectionMatrix[1][1] = aspectRatio;
-		}
-	}
+	void update_view_matrix();
+	void update_projection_matrix(unsigned int width, unsigned int height);
 }

@@ -1,3 +1,3 @@
 #pragma once
 
-extern unsigned int PREFERRED_LINE_COUNT;
+extern unsigned int preferred_line_count;

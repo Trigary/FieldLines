@@ -1,15 +1,11 @@
 #pragma once
+#include "vector.hpp"
 
-class Charge {
+class charge {
 public:
-	Vec2 position;
-	float charge;
+	vec2 position;
+	float amount;
 
-	Charge() : position(0) {
-		charge = 0;
-	}
-
-	Charge(Vec2 position, float charge) : position(position) {
-		this->charge = charge;
-	}
+	charge();
+	charge(vec2 position, float amount);
 };

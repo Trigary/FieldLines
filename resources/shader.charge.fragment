@@ -1,10 +1,10 @@
 #version 460 core
 
 uniform float radius;
-uniform float coloredRadius;
+uniform float colored_radius;
 uniform vec2 screen;
 uniform mat4 view;
-uniform mat4 inverseProjection;
+uniform mat4 inverse_projection;
 
 in vec2 position;
 in float color;
@@ -12,13 +12,13 @@ in float color;
 out vec4 fragColor;
 
 void main() {
-	vec4 vector = inverseProjection * vec4(gl_FragCoord.xy * 2 / screen - 1, 0.0, 0.0);
+	vec4 vector = inverse_projection * vec4(gl_FragCoord.xy * 2 / screen - 1, 0.0, 0.0);
 	float distance = distance(vector.xy, position) / view[0][0];
 	if (distance > radius) {
 		discard;
 	}
 	
-	if (distance > coloredRadius) {
+	if (distance > colored_radius) {
 		fragColor = vec4(0.0, 0.0, 0.0, 1.0);
 		return;
 	}

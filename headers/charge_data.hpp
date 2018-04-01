@@ -1,12 +1,12 @@
 #pragma once
-#include "includes.h"
+#include "charge.hpp"
 
-namespace ChargeData {
+namespace charge_data {
 	extern unsigned int count;
-	extern Charge* charges;
+	extern charge* charges;
 	extern float* vertices;
 
 	void initialize(unsigned int count);
 	void clear();
-	void calculateVertices();
+	void calculate_vertices();
 }
